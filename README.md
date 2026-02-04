@@ -34,10 +34,4 @@ Ask them to:
 
 If it disappears after refresh = localStorage is blocked
 
-## Quick Fix:
 
-Add this to help diagnose the issue. I can add a warning message that shows if localStorage isn't working. Want me to add that? It would show something like:
-
-> "⚠️ Opslag niet beschikbaar. Gebruik een normale browser (niet privé modus) om memo's op te slaan."
-
-Should I add this detection feature?
