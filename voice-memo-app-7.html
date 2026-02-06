@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spraak Memo - Ideeën & Acties</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .record-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .record-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .record-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #5a6c7d 0%, #4a5968 100%);
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(90, 108, 125, 0.4);
+        }
+
+        .record-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(90, 108, 125, 0.6);
+        }
+
+        .record-button.recording {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .status {
+            font-size: 1.2em;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .status.recording {
+            color: #7f8c8d;
+        }
+
+        .transcript {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-height: 60px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .transcript.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .save-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .category-select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+        }
+
+        .save-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #5a6c7d 0%, #4a5968 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 108, 125, 0.4);
+        }
+
+        .save-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #5a6c7d;
+        }
+
+        .tab.active {
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .memos-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .memo-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #5a6c7d;
+        }
+
+        .memo-item.action {
+            border-left-color: #7f8c8d;
+        }
+
+        .memo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .memo-category {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #5a6c7d;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .memo-category.action {
+            background: #7f8c8d;
+        }
+
+        .memo-date {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .memo-text {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .memo-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-button {
+            padding: 8px 16px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .delete-button:hover {
+            background: #7f8c8d;
+        }
+
+        .reminder-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .reminder-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .set-reminder-button {
+            padding: 8px 16px;
+            background: #546e7a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .set-reminder-button:hover {
+            background: #455a64;
+        }
+
+        .reminder-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #546e7a;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .browser-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        .storage-warning {
+            background: #f8d7da;
+            border: 2px solid #f5c2c7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #842029;
+            font-weight: 500;
+        }
+
+        .storage-warning strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .data-controls {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .export-button, .import-button, .copy-text-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .export-button {
+            background: linear-gradient(135deg, #5a6c7d 0%, #4a5968 100%);
+            color: white;
+        }
+
+        .export-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 108, 125, 0.4);
+        }
+
+        .import-button {
+            background: linear-gradient(135deg, #546e7a 0%, #455a64 100%);
+            color: white;
+        }
+
+        .import-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(84, 110, 122, 0.4);
+        }
+
+        .copy-text-button {
+            background: linear-gradient(135deg, #78909c 0%, #607d8b 100%);
+            color: white;
+        }
+
+        .copy-text-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(120, 144, 156, 0.4);
+        }
+
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Spraak Memo</h1>
+            <p>Leg je ideeën en acties direct vast</p>
+        </div>
+
+        <div id="browserWarning" class="browser-warning" style="display: none;">
+            ⚠️ Spraakherkenning vereist een moderne browser zoals Chrome, Edge of Safari. Zorg ervoor dat je microfoontoegang toestaat.
+        </div>
+
+        <div id="storageWarning" class="storage-warning" style="display: none;">
+            <strong>⚠️ Opslag niet beschikbaar!</strong>
+            Je memo's kunnen niet worden opgeslagen. Gebruik een normale browser (niet privé/incognito modus) en controleer of site-opslag is toegestaan in je browserinstellingen.
+        </div>
+
+        <div class="data-controls">
+            <button class="export-button" id="exportButton">
+                <span>⬇️</span>
+                <span>Exporteren</span>
+            </button>
+            <button class="import-button" id="importButton">
+                <span>⬆️</span>
+                <span>Importeren</span>
+            </button>
+            <button class="copy-text-button" id="copyTextButton">
+                <span>📋</span>
+                <span>Kopieer als Tekst</span>
+            </button>
+            <input type="file" id="fileInput" accept=".json">
+        </div>
+
+        <div class="record-section">
+            <div class="record-controls">
+                <button id="recordButton" class="record-button">🎤</button>
+                <div id="status" class="status">Tik om opname te starten</div>
+                <div id="transcript" class="transcript empty">Je woorden verschijnen hier...</div>
+                <div class="save-controls">
+                    <select id="categorySelect" class="category-select">
+                        <option value="idea">💡 Idee</option>
+                        <option value="action">✓ Actie</option>
+                    </select>
+                    <button id="saveButton" class="save-button" disabled>Memo Opslaan</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-filter="all">Alles</button>
+            <button class="tab" data-filter="idea">Ideeën</button>
+            <button class="tab" data-filter="action">Acties</button>
+        </div>
+
+        <div class="memos-section">
+            <div id="memosList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check localStorage availability
+        function isLocalStorageAvailable() {
+            try {
+                const test = '__storage_test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Show warning if localStorage is not available
+        const storageAvailable = isLocalStorageAvailable();
+        if (!storageAvailable) {
+            document.getElementById('storageWarning').style.display = 'block';
+        }
+
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            document.getElementById('browserWarning').style.display = 'block';
+        }
+
+        const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+        if (recognition) {
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'nl-NL';
+        }
+
+        // State
+        let isRecording = false;
+        let currentTranscript = '';
+        let memos = JSON.parse(localStorage.getItem('voiceMemos') || '[]');
+        let currentFilter = 'all';
+
+        // Elements
+        const recordButton = document.getElementById('recordButton');
+        const status = document.getElementById('status');
+        const transcript = document.getElementById('transcript');
+        const saveButton = document.getElementById('saveButton');
+        const categorySelect = document.getElementById('categorySelect');
+        const memosList = document.getElementById('memosList');
+
+        // Event Listeners
+        if (recognition) {
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcriptText = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcriptText + ' ';
+                    } else {
+                        interimTranscript += transcriptText;
+                    }
+                }
+
+                currentTranscript += finalTranscript;
+                const displayText = currentTranscript + interimTranscript;
+                
+                transcript.textContent = displayText || 'Luisteren...';
+                transcript.classList.remove('empty');
+                
+                if (currentTranscript.trim()) {
+                    saveButton.disabled = false;
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                status.textContent = 'Fout: ' + event.error;
+                stopRecording();
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    recognition.start();
+                }
+            };
+        }
+
+        recordButton.addEventListener('click', () => {
+            if (!recognition) {
+                alert('Spraakherkenning wordt niet ondersteund in je browser. Gebruik Chrome, Edge of Safari.');
+                return;
+            }
+
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        saveButton.addEventListener('click', saveMemo);
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                renderMemos();
+            });
+        });
+
+        // Export/Import event listeners
+        document.getElementById('exportButton').addEventListener('click', exportData);
+        document.getElementById('importButton').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+        document.getElementById('copyTextButton').addEventListener('click', copyAsText);
+        document.getElementById('fileInput').addEventListener('change', importData);
+
+        // Functions
+        function startRecording() {
+            isRecording = true;
+            currentTranscript = '';
+            recognition.start();
+            recordButton.classList.add('recording');
+            status.classList.add('recording');
+            status.textContent = 'Opnemen... (tik om te stoppen)';
+            transcript.textContent = 'Luisteren...';
+            transcript.classList.remove('empty');
+            saveButton.disabled = true;
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            recognition.stop();
+            recordButton.classList.remove('recording');
+            status.classList.remove('recording');
+            status.textContent = 'Tik om opname te starten';
+            
+            if (!currentTranscript.trim()) {
+                transcript.textContent = 'Je woorden verschijnen hier...';
+                transcript.classList.add('empty');
+            }
+        }
+
+        function saveMemo() {
+            if (!currentTranscript.trim()) return;
+
+            if (!storageAvailable) {
+                alert('Opslag niet beschikbaar. Je memo kan niet worden opgeslagen. Sluit privé modus of schakel site-opslag in.');
+                return;
+            }
+
+            const memo = {
+                id: Date.now(),
+                text: currentTranscript.trim(),
+                category: categorySelect.value,
+                date: new Date().toISOString()
+            };
+
+            memos.unshift(memo);
+            localStorage.setItem('voiceMemos', JSON.stringify(memos));
+
+            currentTranscript = '';
+            transcript.textContent = 'Je woorden verschijnen hier...';
+            transcript.classList.add('empty');
+            saveButton.disabled = true;
+
+            renderMemos();
+        }
+
+        function deleteMemo(id) {
+            if (!storageAvailable) {
+                alert('Opslag niet beschikbaar. Wijzigingen kunnen niet worden opgeslagen.');
+                return;
+            }
+            memos = memos.filter(m => m.id !== id);
+            localStorage.setItem('voiceMemos', JSON.stringify(memos));
+            renderMemos();
+        }
+
+        function getMinDateTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 5);
+            return now.toISOString().slice(0, 16);
+        }
+
+        function setReminder(id) {
+            const input = document.getElementById(`reminder-${id}`);
+            const reminderTime = input.value;
+            
+            if (!reminderTime) {
+                alert('Selecteer eerst een datum en tijd voor de herinnering.');
+                return;
+            }
+
+            const reminderDate = new Date(reminderTime);
+            const now = new Date();
+
+            if (reminderDate <= now) {
+                alert('Herinnering moet in de toekomst zijn.');
+                return;
+            }
+
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        saveReminderToMemo(id, reminderDate);
+                    } else {
+                        alert('Sta notificaties toe om herinneringen te ontvangen.');
+                    }
+                });
+            } else if (Notification.permission === 'granted') {
+                saveReminderToMemo(id, reminderDate);
+            } else {
+                alert('Notificaties zijn geblokkeerd. Schakel ze in via je browserinstellingen.');
+            }
+        }
+
+        function saveReminderToMemo(id, reminderDate) {
+            if (!storageAvailable) {
+                alert('Opslag niet beschikbaar. Herinnering kan niet worden opgeslagen.');
+                return;
+            }
+            const memo = memos.find(m => m.id === id);
+            if (memo) {
+                memo.reminder = reminderDate.toISOString();
+                localStorage.setItem('voiceMemos', JSON.stringify(memos));
+                scheduleNotification(memo);
+                renderMemos();
+            }
+        }
+
+        function scheduleNotification(memo) {
+            const reminderTime = new Date(memo.reminder);
+            const now = new Date();
+            const delay = reminderTime - now;
+
+            if (delay > 0) {
+                setTimeout(() => {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('🔔 Actie Herinnering', {
+                            body: memo.text,
+                            icon: '🔔',
+                            tag: `memo-${memo.id}`
+                        });
+                    }
+                }, delay);
+            }
+        }
+
+        function formatReminderDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const reminderDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+            const timeStr = date.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+
+            if (reminderDay.getTime() === today.getTime()) {
+                return `Vandaag ${timeStr}`;
+            } else if (reminderDay.getTime() === tomorrow.getTime()) {
+                return `Morgen ${timeStr}`;
+            } else {
+                return date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }) + ` ${timeStr}`;
+            }
+        }
+
+        function exportData() {
+            if (memos.length === 0) {
+                alert('Geen memo\'s om te exporteren.');
+                return;
+            }
+
+            const dataStr = JSON.stringify(memos, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `spraak-memos-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyAsText() {
+            if (memos.length === 0) {
+                alert('Geen memo\'s om te kopiëren.');
+                return;
+            }
+
+            // Group memos by category
+            const ideas = memos.filter(m => m.category === 'idea');
+            const actions = memos.filter(m => m.category === 'action');
+
+            let textOutput = '=== SPRAAK MEMO\'S ===\n';
+            textOutput += `Gegenereerd op: ${new Date().toLocaleDateString('nl-NL', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}\n\n`;
+
+            // Add Ideas section
+            if (ideas.length > 0) {
+                textOutput += '💡 IDEEËN\n';
+                textOutput += '─'.repeat(50) + '\n\n';
+                ideas.forEach((memo, index) => {
+                    const date = new Date(memo.date);
+                    textOutput += `${index + 1}. ${memo.text}\n`;
+                    textOutput += `   Datum: ${date.toLocaleDateString('nl-NL', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}\n\n`;
+                });
+            }
+
+            // Add Actions section
+            if (actions.length > 0) {
+                textOutput += '✓ ACTIES\n';
+                textOutput += '─'.repeat(50) + '\n\n';
+                actions.forEach((memo, index) => {
+                    const date = new Date(memo.date);
+                    textOutput += `${index + 1}. ${memo.text}\n`;
+                    textOutput += `   Datum: ${date.toLocaleDateString('nl-NL', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}\n`;
+                    
+                    if (memo.reminder) {
+                        const reminderDate = new Date(memo.reminder);
+                        textOutput += `   🔔 Herinnering: ${reminderDate.toLocaleDateString('nl-NL', { 
+                            day: 'numeric', 
+                            month: 'short', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}\n`;
+                    }
+                    textOutput += '\n';
+                });
+            }
+
+            textOutput += '─'.repeat(50) + '\n';
+            textOutput += `Totaal: ${memos.length} memo's (${ideas.length} ideeën, ${actions.length} acties)`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(textOutput).then(() => {
+                alert('✅ Gekopieerd naar klembord! Plak het in OneNote met Ctrl+V (of Cmd+V op Mac).');
+            }).catch(err => {
+                // Fallback for browsers that don't support clipboard API
+                const textarea = document.createElement('textarea');
+                textarea.value = textOutput;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    alert('✅ Gekopieerd naar klembord! Plak het in OneNote met Ctrl+V (of Cmd+V op Mac).');
+                } catch (err) {
+                    alert('❌ Kopiëren mislukt. Probeer een andere browser.');
+                }
+                document.body.removeChild(textarea);
+            });
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!storageAvailable) {
+                alert('Opslag niet beschikbaar. Kan memo\'s niet importeren.');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedMemos = JSON.parse(e.target.result);
+                    
+                    if (!Array.isArray(importedMemos)) {
+                        alert('Ongeldig bestandsformaat.');
+                        return;
+                    }
+
+                    // Ask user if they want to merge or replace
+                    let shouldMerge = true;
+                    if (memos.length > 0) {
+                        shouldMerge = confirm(
+                            `Je hebt al ${memos.length} memo's.\n\n` +
+                            `Klik "OK" om samen te voegen (${memos.length + importedMemos.length} totaal)\n` +
+                            `Klik "Annuleren" om te vervangen (${importedMemos.length} totaal)`
+                        );
+                    }
+
+                    if (shouldMerge) {
+                        // Merge: keep existing and add imported (avoid duplicates by ID)
+                        const existingIds = new Set(memos.map(m => m.id));
+                        const newMemos = importedMemos.filter(m => !existingIds.has(m.id));
+                        memos = [...memos, ...newMemos];
+                    } else {
+                        // Replace
+                        memos = importedMemos;
+                    }
+
+                    localStorage.setItem('voiceMemos', JSON.stringify(memos));
+                    
+                    // Re-schedule reminders for imported memos
+                    memos.forEach(memo => {
+                        if (memo.reminder) {
+                            scheduleNotification(memo);
+                        }
+                    });
+
+                    renderMemos();
+                    alert(`Succesvol geïmporteerd! ${importedMemos.length} memo's toegevoegd.`);
+                } catch (error) {
+                    alert('Fout bij het importeren. Controleer of het bestand geldig is.');
+                    console.error('Import error:', error);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input so same file can be imported again
+            event.target.value = '';
+        }
+
+        function renderMemos() {
+            const filtered = currentFilter === 'all' 
+                ? memos 
+                : memos.filter(m => m.category === currentFilter);
+
+            if (filtered.length === 0) {
+                memosList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <p>Nog geen ${currentFilter === 'all' ? "memo's" : currentFilter === 'idea' ? "ideeën" : "acties"}. Begin met opnemen!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            memosList.innerHTML = filtered.map(memo => `
+                <div class="memo-item ${memo.category}">
+                    <div class="memo-header">
+                        <span class="memo-category ${memo.category}">
+                            ${memo.category === 'idea' ? '💡 Idee' : '✓ Actie'}
+                        </span>
+                        <span class="memo-date">
+                            ${formatDate(memo.date)}
+                            ${memo.reminder ? `<span class="reminder-badge">🔔 ${formatReminderDate(memo.reminder)}</span>` : ''}
+                        </span>
+                    </div>
+                    <div class="memo-text">${memo.text}</div>
+                    ${memo.category === 'action' && !memo.reminder ? `
+                        <div class="reminder-controls">
+                            <input type="datetime-local" class="reminder-input" id="reminder-${memo.id}" min="${getMinDateTime()}">
+                            <button class="set-reminder-button" onclick="setReminder(${memo.id})">⏰ Herinnering instellen</button>
+                        </div>
+                    ` : ''}
+                    <div class="memo-actions">
+                        <button class="delete-button" onclick="deleteMemo(${memo.id})">Verwijderen</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Zojuist';
+            if (minutes < 60) return `${minutes}m geleden`;
+            if (hours < 24) return `${hours}u geleden`;
+            if (days < 7) return `${days}d geleden`;
+            
+            return date.toLocaleDateString('nl-NL');
+        }
+
+        // Make functions available globally
+        window.deleteMemo = deleteMemo;
+        window.setReminder = setReminder;
+
+        // Schedule existing reminders on page load
+        memos.forEach(memo => {
+            if (memo.reminder) {
+                scheduleNotification(memo);
+            }
+        });
+
+        // Initial render
+        renderMemos();
+    </script>
+</body>
+</html>
