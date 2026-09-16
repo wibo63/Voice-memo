@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taken &amp; Ideeën</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  min-height: 100vh;
+  padding: 20px;
+  color: #2c3e50;
+}
+.container { max-width: 820px; margin: 0 auto; }
+.header { text-align:center; color:white; margin-bottom:24px; }
+.header h1 { font-size: 2.2em; margin-bottom: 6px; }
+.header p { opacity:.85; font-size:1em; }
+
+.card {
+  background:white; border-radius:16px; padding:24px; margin-bottom:18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Input area */
+.input-row { display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
+.text-input {
+  flex:1; min-height:70px; padding:12px 14px; border:2px solid #e0e0e0; border-radius:10px;
+  font-size:1em; font-family:inherit; resize:vertical; line-height:1.5;
+}
+.text-input:focus { outline:none; border-color:#5a6c7d; }
+.text-input.empty { color:#999; }
+
+.mic-button {
+  width:56px; height:56px; min-width:56px; border-radius:50%; border:none;
+  background: linear-gradient(135deg, #5a6c7d 0%, #4a5968 100%); color:white; font-size:1.4em;
+  cursor:pointer; transition: all .2s ease; box-shadow: 0 4px 10px rgba(90,108,125,.4);
+}
+.mic-button:hover { transform: scale(1.05); }
+.mic-button.recording {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.1);} }
+
+.status-line { font-size:.9em; color:#888; margin-bottom:14px; min-height:1.2em; }
+.status-line.recording { color:#7f8c8d; font-weight:600; }
+
+.field-grid {
+  display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:14px;
+}
+.field { display:flex; flex-direction:column; gap:4px; }
+.field label { font-size:.78em; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+.field select, .field input[type=date] {
+  padding:10px; border:2px solid #e0e0e0; border-radius:8px; font-size:.95em; background:white; cursor:pointer; font-family:inherit;
+}
+
+.category-picker { margin-bottom:14px; }
+.category-picker label { font-size:.78em; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:.03em; display:block; margin-bottom:8px; }
+.chip-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.chip {
+  padding:7px 14px; border-radius:20px; border:2px solid #e0e0e0; background:white; color:#5a6c7d;
+  font-size:.88em; cursor:pointer; transition: all .15s ease; user-select:none;
+}
+.chip.selected { background:#5a6c7d; border-color:#5a6c7d; color:white; }
+.chip-add {
+  padding:7px 12px; border-radius:20px; border:2px dashed #ccc; background:white; color:#999; font-size:.88em; cursor:pointer;
+}
+.chip-add:hover { border-color:#5a6c7d; color:#5a6c7d; }
+
+.form-actions { display:flex; gap:10px; justify-content:flex-end; }
+.save-button, .cancel-button {
+  padding:12px 26px; border:none; border-radius:10px; font-size:1em; font-weight:600; cursor:pointer; transition: all .2s ease;
+}
+.save-button { background: linear-gradient(135deg, #5a6c7d 0%, #4a5968 100%); color:white; }
+.save-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(90,108,125,.4); }
+.save-button:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+.cancel-button { background:#eceff1; color:#5a6c7d; }
+.cancel-button:hover { background:#dfe4e6; }
+
+/* Filter/sort bar */
+.filter-bar {
+  display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;
+}
+.filter-bar .field { min-width:130px; flex:1; }
+.filter-bar .field select { width:100%; }
+.toggle-field { display:flex; align-items:center; gap:8px; padding-bottom:2px; }
+.toggle-field input { width:18px; height:18px; cursor:pointer; }
+.toggle-field label { font-size:.9em; color:#5a6c7d; cursor:pointer; text-transform:none; letter-spacing:0; font-weight:500; }
+
+/* List */
+.list-section { padding:24px; }
+.item {
+  background:#f8f9fa; padding:18px; border-radius:10px; margin-bottom:12px; border-left:4px solid #5a6c7d;
+  display:flex; gap:12px;
+}
+.item.completed { opacity:.55; }
+.item.completed .item-text { text-decoration: line-through; }
+.item-checkbox { margin-top:3px; width:20px; height:20px; min-width:20px; cursor:pointer; }
+.item-body { flex:1; min-width:0; }
+.item-header { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; }
+.badge { padding:4px 10px; border-radius:20px; font-size:.78em; font-weight:600; color:white; white-space:nowrap; }
+.badge-type-idee { background:#5a6c7d; }
+.badge-type-actie { background:#7f8c8d; }
+.badge-size-klein { background:#b0bec5; }
+.badge-size-medium { background:#78909c; }
+.badge-size-groot { background:#455a64; }
+.badge-prio-laag { background:#a5d6a7; color:#1b5e20; }
+.badge-prio-gemiddeld { background:#ffe082; color:#795548; }
+.badge-prio-hoog { background:#ef9a9a; color:#7f0000; }
+.badge-cat { background:#e0e0e0; color:#546e7a; }
+.item-meta { color:#999; font-size:.82em; margin-left:auto; text-align:right; }
+.item-text { color:#333; line-height:1.5; margin-bottom:10px; white-space:pre-wrap; }
+.reminder-badge { display:inline-block; padding:4px 10px; background:#546e7a; color:white; border-radius:12px; font-size:.8em; }
+.duedate-badge { display:inline-block; padding:4px 10px; background:#90a4ae; color:white; border-radius:12px; font-size:.8em; }
+
+.reminder-controls { margin-top:8px; display:flex; flex-direction:column; gap:8px; max-width:280px; }
+.reminder-input { width:100%; padding:8px 12px; border:2px solid #e0e0e0; border-radius:8px; font-size:.9em; }
+.set-reminder-button {
+  width:100%; padding:8px 16px; background:#546e7a; color:white; border:none; border-radius:8px; font-size:.9em; cursor:pointer;
+}
+.set-reminder-button:hover { background:#455a64; }
+
+.item-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.edit-button, .delete-button {
+  padding:7px 14px; border:none; border-radius:8px; font-size:.85em; cursor:pointer; transition: all .2s ease; color:white;
+}
+.edit-button { background:#78909c; }
+.edit-button:hover { background:#607d8b; }
+.delete-button { background:#95a5a6; }
+.delete-button:hover { background:#7f8c8d; }
+
+.empty-state { text-align:center; padding:40px; color:#999; }
+.empty-state svg { width:70px; height:70px; margin-bottom:16px; opacity:.3; }
+
+.browser-warning, .storage-warning {
+  border-radius:10px; padding:14px; margin-bottom:16px; font-weight:500;
+}
+.browser-warning { background:#fff3cd; border:2px solid #ffc107; color:#856404; }
+.storage-warning { background:#f8d7da; border:2px solid #f5c2c7; color:#842029; }
+.storage-warning strong { display:block; margin-bottom:4px; }
+
+.data-controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.data-controls button {
+  flex:1; min-width:140px; padding:12px 18px; border:none; border-radius:10px; font-size:.95em; font-weight:600;
+  cursor:pointer; transition: all .2s ease; color:white; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.export-button { background: linear-gradient(135deg, #5a6c7d 0%, #4a5968 100%); }
+.import-button { background: linear-gradient(135deg, #546e7a 0%, #455a64 100%); }
+.copy-text-button { background: linear-gradient(135deg, #78909c 0%, #607d8b 100%); }
+.data-controls button:hover { transform: translateY(-2px); }
+#fileInput { display:none; }
+
+.section-title { font-size:.95em; font-weight:700; color:#546e7a; margin-bottom:12px; text-transform:uppercase; letter-spacing:.03em; }
+
+@media (max-width: 480px) {
+  .header h1 { font-size: 1.7em; }
+  .card, .list-section { padding:18px; }
+  .item-meta { text-align:left; margin-left:0; width:100%; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📝 Taken &amp; Ideeën</h1>
+    <p>Leg vast, categoriseer, prioriteer</p>
+  </div>
+
+  <div id="browserWarning" class="browser-warning" style="display:none;">
+    ⚠️ Spraakherkenning vereist een moderne browser zoals Chrome, Edge of Safari. Zorg ervoor dat je microfoontoegang toestaat.
+  </div>
+  <div id="storageWarning" class="storage-warning" style="display:none;">
+    <strong>⚠️ Opslag niet beschikbaar!</strong>
+    Je items kunnen niet worden opgeslagen. Gebruik een normale browser (niet privé/incognito modus) en controleer of site-opslag is toegestaan.
+  </div>
+
+  <div class="data-controls">
+    <button class="export-button" id="exportButton"><span>⬇️</span><span>Exporteren</span></button>
+    <button class="import-button" id="importButton"><span>⬆️</span><span>Importeren</span></button>
+    <button class="copy-text-button" id="copyTextButton"><span>📋</span><span>Kopieer als Tekst</span></button>
+    <input type="file" id="fileInput" accept=".json">
+  </div>
+
+  <div class="card">
+    <div class="input-row">
+      <textarea id="textInput" class="text-input" placeholder="Typ of spreek je idee of actie in..."></textarea>
+      <button id="micButton" class="mic-button" title="Spraakinvoer">🎤</button>
+    </div>
+    <div id="statusLine" class="status-line"></div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="typeSelect">Type</label>
+        <select id="typeSelect">
+          <option value="idea">💡 Idee</option>
+          <option value="action">✓ Actie</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sizeSelect">Grootte</label>
+        <select id="sizeSelect">
+          <option value="klein">Klein</option>
+          <option value="medium" selected>Medium</option>
+          <option value="groot">Groot</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="prioritySelect">Prioriteit</label>
+        <select id="prioritySelect">
+          <option value="laag">Laag</option>
+          <option value="gemiddeld" selected>Gemiddeld</option>
+          <option value="hoog">Hoog</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="dueDateInput">Vervaldatum</label>
+        <input type="date" id="dueDateInput">
+      </div>
+    </div>
+
+    <div class="category-picker">
+      <label>Categorieën</label>
+      <div class="chip-row" id="categoryChips"></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="cancel-button" id="cancelEditButton" style="display:none;">Annuleren</button>
+      <button class="save-button" id="saveButton" disabled>Opslaan</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filter-bar">
+      <div class="field">
+        <label for="filterType">Type</label>
+        <select id="filterType">
+          <option value="all">Alle</option>
+          <option value="idea">Ideeën</option>
+          <option value="action">Acties</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterCategory">Categorie</label>
+        <select id="filterCategory"><option value="all">Alle</option></select>
+      </div>
+      <div class="field">
+        <label for="filterSize">Grootte</label>
+        <select id="filterSize">
+          <option value="all">Alle</option>
+          <option value="klein">Klein</option>
+          <option value="medium">Medium</option>
+          <option value="groot">Groot</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterPriority">Prioriteit</label>
+        <select id="filterPriority">
+          <option value="all">Alle</option>
+          <option value="laag">Laag</option>
+          <option value="gemiddeld">Gemiddeld</option>
+          <option value="hoog">Hoog</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sortBy">Sorteren</label>
+        <select id="sortBy">
+          <option value="date-desc">Nieuwste eerst</option>
+          <option value="date-asc">Oudste eerst</option>
+          <option value="priority-desc">Prioriteit (hoog-laag)</option>
+          <option value="size-desc">Grootte (groot-klein)</option>
+          <option value="duedate-asc">Vervaldatum (dichtbij eerst)</option>
+        </select>
+      </div>
+      <div class="toggle-field">
+        <input type="checkbox" id="showCompleted">
+        <label for="showCompleted">Toon voltooide</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card list-section">
+    <div id="itemsList"></div>
+  </div>
+</div>
+
+<script>
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRecognition) document.getElementById('browserWarning').style.display = 'block';
+
+function isLocalStorageAvailable() {
+  try { const t='__t__'; localStorage.setItem(t,t); localStorage.removeItem(t); return true; }
+  catch(e) { return false; }
+}
+const storageAvailable = isLocalStorageAvailable();
+if (!storageAvailable) document.getElementById('storageWarning').style.display = 'block';
+
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+if (recognition) { recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'nl-NL'; }
+
+// State
+let isRecording = false;
+let baseTextBeforeRecording = '';
+let items = JSON.parse(localStorage.getItem('voiceMemos') || '[]').map(normalizeItem);
+let categories = JSON.parse(localStorage.getItem('customCategories') || 'null') || ['Hobby','Huis','Tuin','Reizen'];
+let selectedCategories = [];
+let editingId = null;
+
+function normalizeItem(m) {
+  return {
+    id: m.id,
+    text: m.text,
+    category: m.category || 'idea', // type: idea/action (kept field name for backward compat)
+    date: m.date,
+    reminder: m.reminder || null,
+    size: m.size || 'medium',
+    priority: m.priority || 'gemiddeld',
+    tags: m.tags || [],
+    dueDate: m.dueDate || null,
+    completed: m.completed || false
+  };
+}
+
+function persistItems() {
+  localStorage.setItem('voiceMemos', JSON.stringify(items));
+}
+function persistCategories() {
+  localStorage.setItem('customCategories', JSON.stringify(categories));
+}
+
+// Elements
+const textInput = document.getElementById('textInput');
+const micButton = document.getElementById('micButton');
+const statusLine = document.getElementById('statusLine');
+const saveButton = document.getElementById('saveButton');
+const cancelEditButton = document.getElementById('cancelEditButton');
+const typeSelect = document.getElementById('typeSelect');
+const sizeSelect = document.getElementById('sizeSelect');
+const prioritySelect = document.getElementById('prioritySelect');
+const dueDateInput = document.getElementById('dueDateInput');
+const categoryChips = document.getElementById('categoryChips');
+const itemsList = document.getElementById('itemsList');
+const filterType = document.getElementById('filterType');
+const filterCategory = document.getElementById('filterCategory');
+const filterSize = document.getElementById('filterSize');
+const filterPriority = document.getElementById('filterPriority');
+const sortBy = document.getElementById('sortBy');
+const showCompleted = document.getElementById('showCompleted');
+
+function updateSaveButtonState() {
+  saveButton.disabled = !textInput.value.trim();
+}
+textInput.addEventListener('input', updateSaveButtonState);
+
+// Speech recognition
+if (recognition) {
+  recognition.onresult = (event) => {
+    let interim = '', final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) final += t + ' '; else interim += t;
+    }
+    const base = baseTextBeforeRecording ? baseTextBeforeRecording + ' ' : '';
+    textInput.value = (base + final + interim).trim();
+    updateSaveButtonState();
+  };
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+    statusLine.textContent = 'Fout: ' + event.error;
+    stopRecording();
+  };
+  recognition.onend = () => { if (isRecording) recognition.start(); };
+}
+
+micButton.addEventListener('click', () => {
+  if (!recognition) { alert('Spraakherkenning wordt niet ondersteund in je browser. Gebruik Chrome, Edge of Safari.'); return; }
+  isRecording ? stopRecording() : startRecording();
+});
+
+function startRecording() {
+  isRecording = true;
+  baseTextBeforeRecording = textInput.value.trim();
+  recognition.start();
+  micButton.classList.add('recording');
+  statusLine.classList.add('recording');
+  statusLine.textContent = 'Opnemen... (tik microfoon om te stoppen)';
+}
+function stopRecording() {
+  isRecording = false;
+  recognition.stop();
+  micButton.classList.remove('recording');
+  statusLine.classList.remove('recording');
+  statusLine.textContent = '';
+}
+
+// Category chips rendering (for the form)
+function renderCategoryChips() {
+  categoryChips.innerHTML = '';
+  categories.forEach(cat => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip' + (selectedCategories.includes(cat) ? ' selected' : '');
+    chip.textContent = cat;
+    chip.onclick = () => {
+      if (selectedCategories.includes(cat)) selectedCategories = selectedCategories.filter(c => c !== cat);
+      else selectedCategories.push(cat);
+      renderCategoryChips();
+    };
+    categoryChips.appendChild(chip);
+  });
+  const addChip = document.createElement('button');
+  addChip.type = 'button';
+  addChip.className = 'chip-add';
+  addChip.textContent = '+ nieuwe categorie';
+  addChip.onclick = () => {
+    const name = prompt('Naam van de nieuwe categorie:');
+    if (name && name.trim() && !categories.includes(name.trim())) {
+      categories.push(name.trim());
+      persistCategories();
+      selectedCategories.push(name.trim());
+      renderCategoryChips();
+      renderFilterCategoryOptions();
+    }
+  };
+  categoryChips.appendChild(addChip);
+}
+
+function renderFilterCategoryOptions() {
+  const current = filterCategory.value;
+  filterCategory.innerHTML = '<option value="all">Alle</option>' +
+    categories.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+  if (categories.includes(current)) filterCategory.value = current;
+}
+
+function resetForm() {
+  textInput.value = '';
+  textInput.classList.add('empty');
+  typeSelect.value = 'idea';
+  sizeSelect.value = 'medium';
+  prioritySelect.value = 'gemiddeld';
+  dueDateInput.value = '';
+  selectedCategories = [];
+  renderCategoryChips();
+  updateSaveButtonState();
+  editingId = null;
+  saveButton.textContent = 'Opslaan';
+  cancelEditButton.style.display = 'none';
+}
+
+saveButton.addEventListener('click', () => {
+  const text = textInput.value.trim();
+  if (!text) return;
+  if (!storageAvailable) { alert('Opslag niet beschikbaar. Item kan niet worden opgeslagen.'); return; }
+
+  if (editingId !== null) {
+    const item = items.find(i => i.id === editingId);
+    if (item) {
+      item.text = text;
+      item.category = typeSelect.value;
+      item.size = sizeSelect.value;
+      item.priority = prioritySelect.value;
+      item.tags = [...selectedCategories];
+      item.dueDate = dueDateInput.value || null;
+      persistItems();
+    }
+  } else {
+    const item = {
+      id: Date.now(),
+      text,
+      category: typeSelect.value,
+      date: new Date().toISOString(),
+      reminder: null,
+      size: sizeSelect.value,
+      priority: prioritySelect.value,
+      tags: [...selectedCategories],
+      dueDate: dueDateInput.value || null,
+      completed: false
+    };
+    items.unshift(item);
+    persistItems();
+  }
+  resetForm();
+  renderItems();
+});
+
+cancelEditButton.addEventListener('click', resetForm);
+
+function startEdit(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  editingId = id;
+  textInput.value = item.text;
+  textInput.classList.remove('empty');
+  typeSelect.value = item.category;
+  sizeSelect.value = item.size;
+  prioritySelect.value = item.priority;
+  dueDateInput.value = item.dueDate || '';
+  selectedCategories = [...item.tags];
+  renderCategoryChips();
+  updateSaveButtonState();
+  saveButton.textContent = 'Wijzigen opslaan';
+  cancelEditButton.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteItem(id) {
+  if (!storageAvailable) { alert('Opslag niet beschikbaar. Wijzigingen kunnen niet worden opgeslagen.'); return; }
+  items = items.filter(i => i.id !== id);
+  persistItems();
+  if (editingId === id) resetForm();
+  renderItems();
+}
+
+function toggleComplete(id) {
+  if (!storageAvailable) { alert('Opslag niet beschikbaar.'); return; }
+  const item = items.find(i => i.id === id);
+  if (item) { item.completed = !item.completed; persistItems(); renderItems(); }
+}
+
+function getMinDateTime() {
+  const now = new Date(); now.setMinutes(now.getMinutes() + 5);
+  return now.toISOString().slice(0,16);
+}
+
+function setReminder(id) {
+  const input = document.getElementById(`reminder-${id}`);
+  const reminderTime = input.value;
+  if (!reminderTime) { alert('Selecteer eerst een datum en tijd voor de herinnering.'); return; }
+  const reminderDate = new Date(reminderTime);
+  if (reminderDate <= new Date()) { alert('Herinnering moet in de toekomst zijn.'); return; }
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(p => { if (p === 'granted') saveReminder(id, reminderDate); else alert('Sta notificaties toe om herinneringen te ontvangen.'); });
+  } else if (Notification.permission === 'granted') {
+    saveReminder(id, reminderDate);
+  } else {
+    alert('Notificaties zijn geblokkeerd. Schakel ze in via je browserinstellingen.');
+  }
+}
+function saveReminder(id, reminderDate) {
+  if (!storageAvailable) { alert('Opslag niet beschikbaar.'); return; }
+  const item = items.find(i => i.id === id);
+  if (item) { item.reminder = reminderDate.toISOString(); persistItems(); scheduleNotification(item); renderItems(); }
+}
+function scheduleNotification(item) {
+  const delay = new Date(item.reminder) - new Date();
+  if (delay > 0) {
+    setTimeout(() => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🔔 Herinnering', { body: item.text, tag: `item-${item.id}` });
+      }
+    }, delay);
+  }
+}
+
+// Filters/sort
+[filterType, filterCategory, filterSize, filterPriority, sortBy, showCompleted].forEach(el => {
+  el.addEventListener('change', renderItems);
+});
+
+function getFilteredSortedItems() {
+  let list = items.filter(i => {
+    if (filterType.value !== 'all' && i.category !== filterType.value) return false;
+    if (filterCategory.value !== 'all' && !i.tags.includes(filterCategory.value)) return false;
+    if (filterSize.value !== 'all' && i.size !== filterSize.value) return false;
+    if (filterPriority.value !== 'all' && i.priority !== filterPriority.value) return false;
+    if (!showCompleted.checked && i.completed) return false;
+    return true;
+  });
+
+  const sizeRank = { klein:1, medium:2, groot:3 };
+  const prioRank = { laag:1, gemiddeld:2, hoog:3 };
+
+  switch (sortBy.value) {
+    case 'date-asc': list.sort((a,b) => new Date(a.date) - new Date(b.date)); break;
+    case 'priority-desc': list.sort((a,b) => prioRank[b.priority] - prioRank[a.priority]); break;
+    case 'size-desc': list.sort((a,b) => sizeRank[b.size] - sizeRank[a.size]); break;
+    case 'duedate-asc': list.sort((a,b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate) - new Date(b.dueDate);
+      }); break;
+    case 'date-desc':
+    default: list.sort((a,b) => new Date(b.date) - new Date(a.date));
+  }
+  return list;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(str) { return escapeHtml(str); }
+
+function renderItems() {
+  const list = getFilteredSortedItems();
+  if (list.length === 0) {
+    itemsList.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p>Niks gevonden. Voeg iets toe of pas je filters aan.</p>
+      </div>`;
+    return;
+  }
+
+  itemsList.innerHTML = list.map(item => {
+    const sizeLabel = item.size.charAt(0).toUpperCase() + item.size.slice(1);
+    const prioLabel = item.priority.charAt(0).toUpperCase() + item.priority.slice(1);
+    const tagsHtml = item.tags.map(t => `<span class="badge badge-cat">${escapeHtml(t)}</span>`).join('');
+    const dueHtml = item.dueDate ? `<span class="duedate-badge">📅 ${new Date(item.dueDate).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'})}</span>` : '';
+    const reminderHtml = item.reminder ? `<span class="reminder-badge">🔔 ${formatReminderDate(item.reminder)}</span>` : '';
+    const reminderControls = (!item.reminder && !item.completed) ? `
+      <div class="reminder-controls">
+        <input type="datetime-local" class="reminder-input" id="reminder-${item.id}" min="${getMinDateTime()}">
+        <button class="set-reminder-button" onclick="setReminder(${item.id})">⏰ Herinnering instellen</button>
+      </div>` : '';
+
+    return `
+      <div class="item ${item.completed ? 'completed' : ''}">
+        <input type="checkbox" class="item-checkbox" ${item.completed ? 'checked' : ''} onchange="toggleComplete(${item.id})" title="Voltooid">
+        <div class="item-body">
+          <div class="item-header">
+            <span class="badge badge-type-${item.category === 'idea' ? 'idee' : 'actie'}">${item.category === 'idea' ? '💡 Idee' : '✓ Actie'}</span>
+            <span class="badge badge-size-${item.size}">${sizeLabel}</span>
+            <span class="badge badge-prio-${item.priority}">${prioLabel}</span>
+            ${tagsHtml}
+            ${dueHtml}
+            ${reminderHtml}
+            <span class="item-meta">${formatDate(item.date)}</span>
+          </div>
+          <div class="item-text">${escapeHtml(item.text)}</div>
+          ${reminderControls}
+          <div class="item-actions">
+            <button class="edit-button" onclick="startEdit(${item.id})">Bewerken</button>
+            <button class="delete-button" onclick="deleteItem(${item.id})">Verwijderen</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const diff = new Date() - date;
+  const minutes = Math.floor(diff/60000), hours = Math.floor(diff/3600000), days = Math.floor(diff/86400000);
+  if (minutes < 1) return 'Zojuist';
+  if (minutes < 60) return `${minutes}m geleden`;
+  if (hours < 24) return `${hours}u geleden`;
+  if (days < 7) return `${days}d geleden`;
+  return date.toLocaleDateString('nl-NL');
+}
+function formatReminderDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const timeStr = date.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'});
+  if (day.getTime() === today.getTime()) return `Vandaag ${timeStr}`;
+  if (day.getTime() === tomorrow.getTime()) return `Morgen ${timeStr}`;
+  return date.toLocaleDateString('nl-NL', {day:'numeric', month:'short'}) + ` ${timeStr}`;
+}
+
+// Export / Import / Copy
+document.getElementById('exportButton').addEventListener('click', () => {
+  if (items.length === 0) { alert('Geen items om te exporteren.'); return; }
+  const dataStr = JSON.stringify(items, null, 2);
+  const blob = new Blob([dataStr], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = `taken-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importButton').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!storageAvailable) { alert('Opslag niet beschikbaar. Kan niet importeren.'); event.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result).map(normalizeItem);
+      if (!Array.isArray(imported)) { alert('Ongeldig bestandsformaat.'); return; }
+      let merge = true;
+      if (items.length > 0) {
+        merge = confirm(`Je hebt al ${items.length} items.\n\nKlik "OK" om samen te voegen (${items.length + imported.length} totaal)\nKlik "Annuleren" om te vervangen (${imported.length} totaal)`);
+      }
+      if (merge) {
+        const existingIds = new Set(items.map(i => i.id));
+        items = [...items, ...imported.filter(i => !existingIds.has(i.id))];
+      } else {
+        items = imported;
+      }
+      persistItems();
+      items.forEach(i => { if (i.reminder) scheduleNotification(i); });
+      renderFilterCategoryOptions();
+      renderItems();
+      alert(`Succesvol geïmporteerd! ${imported.length} items verwerkt.`);
+    } catch (err) {
+      alert('Fout bij het importeren. Controleer of het bestand geldig is.');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+});
+
+document.getElementById('copyTextButton').addEventListener('click', () => {
+  if (items.length === 0) { alert('Geen items om te kopiëren.'); return; }
+  const ideas = items.filter(i => i.category === 'idea');
+  const actions = items.filter(i => i.category === 'action');
+  const fmt = (d) => new Date(d).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+
+  let out = '=== TAKEN & IDEEËN ===\n';
+  out += `Gegenereerd op: ${fmt(new Date())}\n\n`;
+
+  function section(title, list) {
+    if (list.length === 0) return '';
+    let s = `${title}\n` + '─'.repeat(50) + '\n\n';
+    list.forEach((item, idx) => {
+      s += `${idx+1}. [${item.completed ? 'x' : ' '}] ${item.text}\n`;
+      s += `   Grootte: ${item.size} | Prioriteit: ${item.priority}`;
+      if (item.tags.length) s += ` | Categorieën: ${item.tags.join(', ')}`;
+      s += `\n   Toegevoegd: ${fmt(item.date)}\n`;
+      if (item.dueDate) s += `   Vervaldatum: ${new Date(item.dueDate).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}\n`;
+      if (item.reminder) s += `   Herinnering: ${fmt(item.reminder)}\n`;
+      s += '\n';
+    });
+    return s;
+  }
+
+  out += section('💡 IDEEËN', ideas);
+  out += section('✓ ACTIES', actions);
+  out += '─'.repeat(50) + '\n';
+  out += `Totaal: ${items.length} items (${ideas.length} ideeën, ${actions.length} acties)`;
+
+  navigator.clipboard.writeText(out).then(() => {
+    alert('✅ Gekopieerd naar klembord! Plak het in OneNote met Ctrl+V (of Cmd+V op Mac).');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = out; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert('✅ Gekopieerd naar klembord!'); }
+    catch(e) { alert('❌ Kopiëren mislukt. Probeer een andere browser.'); }
+    document.body.removeChild(ta);
+  });
+});
+
+// Expose globals
+window.startEdit = startEdit;
+window.deleteItem = deleteItem;
+window.toggleComplete = toggleComplete;
+window.setReminder = setReminder;
+
+// Init
+renderCategoryChips();
+renderFilterCategoryOptions();
+items.forEach(i => { if (i.reminder) scheduleNotification(i); });
+resetForm();
+renderItems();
+</script>
+</body>
+</html>
